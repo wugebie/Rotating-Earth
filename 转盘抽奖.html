@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<body>
+		<input type="button" value="开始" id="btn" style="float:left;" /> 
+		<canvas id="canvas" width="800" height="800"></canvas>
+		<script type="text/javascript">
+		 	var begin = document.getElementById("btn");
+			var colors = ["#B8D430", "#3AB745", "#029990", "#3501CB",  
+			             "#2E2C75", "#673A7E", "#CC0071", "#F80120",  
+			             "#F35B20", "#FB9A00", "#FFCC00", "#FEF200"];  
+			var restaraunts = ["去死", "强吻", "卖傻", "搞基",  
+			                   "全裸表白", "打篮球", "不上班", "喝酒",  
+			                   "放屁", "请吃饭", "不洗头", "一个亿"];  
+			  
+			var startAngle = 0;  //开始弧度
+			var arc = Math.PI / 6;  
+			var spinTimeout = null;  
+			  
+			var spinArcStart = 10;  
+			var spinTime = 0;  
+			var spinTimeTotal = 0;  
+			  
+			var ctx;  
+			var prev = 0;
+			  
+			function drawRouletteWheel() {  
+			  var canvas = document.getElementById("canvas"); 
+			 
+			  if (canvas.getContext) {  
+			    var outsideRadius = 200;  //转盘外弧
+			    var textRadius = 160;  
+			    var insideRadius = 125;  //转盘内弧
+			  
+			    ctx = canvas.getContext("2d");  
+			    ctx.clearRect(0,0,500,500);  
+			  
+			  
+			    ctx.strokeStyle = "black";  //边框颜色
+			    ctx.lineWidth = 2;  //线宽
+			  
+			    ctx.font = 'bold 12px Helvetica, Arial';  
+			  
+			    for(var i = 0; i < 12; i++) {  
+			      var angle = startAngle + i * arc;  
+			      ctx.fillStyle = colors[i];  
+			  
+			      ctx.beginPath();  
+			      ctx.arc(250, 250, outsideRadius, angle, angle + arc, false);  
+			      ctx.arc(250, 250, insideRadius, angle + arc, angle, true);  
+			      ctx.stroke();  
+			      ctx.fill();  
+			  
+			      ctx.save();  
+			      ctx.shadowOffsetX = -1;  
+			      ctx.shadowOffsetY = -1;  
+			      ctx.shadowBlur    = 0;  
+			      ctx.shadowColor   = "rgb(220,220,220)";  
+			      ctx.fillStyle = "black";  
+			      ctx.translate(250 + Math.cos(angle + arc / 2) * textRadius,   
+			                    250 + Math.sin(angle + arc / 2) * textRadius);  
+			      ctx.rotate(angle + arc / 2 + Math.PI / 2);  
+			      var text = restaraunts[i]; 
+			      ctx.font='20px impact';
+			      ctx.fillText(text, -ctx.measureText(text).width / 2, 0); 
+			     
+			      ctx.restore();  
+			    }   
+			  
+			    //Arrow  
+			    ctx.fillStyle = "black";  
+			    ctx.beginPath();  
+			    ctx.moveTo(250 - 4, 250 - (outsideRadius + 5));  
+			    ctx.lineTo(250 + 4, 250 - (outsideRadius + 5));  
+			    ctx.lineTo(250 + 4, 250 - (outsideRadius - 5));  
+			    ctx.lineTo(250 + 9, 250 - (outsideRadius - 5));  
+			    ctx.lineTo(250 + 0, 250 - (outsideRadius - 13));  
+			    ctx.lineTo(250 - 9, 250 - (outsideRadius - 5));  
+			    ctx.lineTo(250 - 4, 250 - (outsideRadius - 5));  
+			    ctx.lineTo(250 - 4, 250 - (outsideRadius + 5));  
+			    ctx.fill();  
+			  }  
+			}  
+			
+			function spin() {  
+			  spinAngleStart = Math.random()*1000+2000;  
+			  spinTime = 0;  
+			  spinTimeTotal = 4000;  
+			  rotateWheel();  
+			}
+			function rotateWheel() {
+				clearTimeout(spinTimeout);
+			  	spinTime += 8 ;
+			  	console.log(spinTime)
+			  	var spinAngle = easeBothStrong(spinTime, prev, spinAngleStart, 4000);
+			  	startAngle = (spinAngle * Math.PI / 180);
+			  	if(spinTime >= spinTimeTotal) {
+			    	stopRotateWheel(spinAngle); 
+			    	return;  
+			  	}
+			  	drawRouletteWheel();
+			  	spinTimeout = setTimeout(rotateWheel, 30);
+			}  
+			   
+			function stopRotateWheel(spinAngle) {
+			 	//clearTimeout(spinTimeout);
+			  	prev = spinAngle;
+			  	var degrees = startAngle * 180 / Math.PI + 90;  
+			  	var arcd = arc * 180 / Math.PI;  
+			  	var index = Math.floor((360 - degrees % 360) / arcd);  
+			  	ctx.save();  
+			  	ctx.font = 'bold 40px Helvetica, Arial';  
+			  	var text = restaraunts[index]  
+			  	ctx.fillText(text, 250 - ctx.measureText(text).width / 2, 250 + 10);  
+			  	ctx.restore();  
+			}  
+			
+//			t:已运动时间（需要计算）
+//			b:起始位置（直接获取）
+//			c:要运动距离（需要计算）
+//			d:运动时间(传入)
+			   
+			function easeBothStrong(t, b, c, d){  //加加速减减速曲线
+			    if ((t/=d/2) < 1) {
+			        return c/2*t*t*t*t + b;
+			    }
+			    return -c/2 * ((t-=2)*t*t*t - 2) + b;
+			};
+			
+			function easeBoth(t, b, c, d){  //加速减速曲线
+		        if ((t/=d/2) < 1) {
+		            return c/2*t*t + b;
+		        }
+		        return -c/2 * ((--t)*(t-2) - 1) + b;
+		    }
+			
+			
+			
+			drawRouletteWheel(); 
+			begin.onclick = function(ev){
+				ev.preventDefault();
+				spin();
+			}
+		</script>
+	</body>
+</html>
